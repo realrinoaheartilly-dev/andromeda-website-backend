@@ -1,84 +1,54 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs-extra");
-const { v4: uuidv4 } = require("uuid");
+const fs = require("fs");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(express.json());
 
-const POSTS_FILE = "./posts.json";
-const REVIEWS_FILE = "./reviews.json";
+const PORT = process.env.PORT || 10000;
 
-/* ---------- HELPERS ---------- */
+// storage files
+const reviewsFile = "./reviews.json";
+const publishersFile = "./publishers.json";
 
-async function readJSON(file) {
-  try {
-    return await fs.readJson(file);
-  } catch {
-    return [];
-  }
-}
+// create files if missing
+if (!fs.existsSync(reviewsFile)) fs.writeFileSync(reviewsFile, "[]");
+if (!fs.existsSync(publishersFile)) fs.writeFileSync(publishersFile, "[]");
 
-async function writeJSON(file, data) {
-  await fs.writeJson(file, data, { spaces: 2 });
-}
-
-/* ---------- POSTS API ---------- */
-
-app.get("/posts", async (req, res) => {
-  const posts = await readJSON(POSTS_FILE);
-  res.json(posts);
-});
-
-app.post("/posts", async (req, res) => {
-  const posts = await readJSON(POSTS_FILE);
-
-  const newPost = {
-    id: uuidv4(),
-    title: req.body.title,
-    content: req.body.content,
-    author: req.body.author || "Andromeda Publisher",
-    date: new Date()
-  };
-
-  posts.unshift(newPost);
-  await writeJSON(POSTS_FILE, posts);
-
-  res.json(newPost);
-});
-
-/* ---------- REVIEWS API ---------- */
-
-app.get("/reviews", async (req, res) => {
-  const reviews = await readJSON(REVIEWS_FILE);
-  res.json(reviews);
-});
-
-app.post("/reviews", async (req, res) => {
-  const reviews = await readJSON(REVIEWS_FILE);
-
-  const newReview = {
-    id: uuidv4(),
-    postId: req.body.postId,
-    name: req.body.name,
-    message: req.body.message,
-    date: new Date()
-  };
-
-  reviews.push(newReview);
-  await writeJSON(REVIEWS_FILE, reviews);
-
-  res.json(newReview);
-});
-
-/* ---------- ROOT CHECK ---------- */
-
+// HOME ROUTE
 app.get("/", (req, res) => {
   res.send("Andromeda Backend is running 🚀");
 });
+
+
+// ===== REVIEWS =====
+app.get("/api/reviews", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(reviewsFile));
+  res.json(data);
+});
+
+app.post("/api/reviews", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(reviewsFile));
+  data.push(req.body);
+  fs.writeFileSync(reviewsFile, JSON.stringify(data, null, 2));
+  res.json({ success: true });
+});
+
+
+// ===== PUBLISHERS =====
+app.get("/api/publishers", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(publishersFile));
+  res.json(data);
+});
+
+app.post("/api/publishers", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(publishersFile));
+  data.push(req.body);
+  fs.writeFileSync(publishersFile, JSON.stringify(data, null, 2));
+  res.json({ success: true });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
