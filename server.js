@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs"); // ⭐ THIS WAS MISSING
 
 const app = express();
 
@@ -48,7 +49,6 @@ app.post("/api/publishers", (req, res) => {
   fs.writeFileSync(publishersFile, JSON.stringify(data, null, 2));
   res.json({ success: true });
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
